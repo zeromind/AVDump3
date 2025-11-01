@@ -333,7 +333,6 @@ jobs:
 
     - name: Install build dependencies
       run: |
-        touch setup_devtools.sh
         case "${{ matrix.rid }}" in
           linux-musl*)
             apk add cmake g++ make zlib-dev
