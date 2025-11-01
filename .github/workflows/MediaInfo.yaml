@@ -9,7 +9,7 @@ jobs:
   prepare-mediainfo:
     runs-on: ubuntu-latest
     env:
-      MEDIAINFO_VERSION: 24.01
+      MEDIAINFO_VERSION: 25.09
 
     steps:
     - name: Check out AVDump3
@@ -283,25 +283,21 @@ jobs:
         include:
         - os: ubuntu
           rid: linux-musl-x64
-          docker_image: alpine:3.12
+          docker_image: alpine:3.20
 
         - os: ubuntu
           rid: linux-musl-arm64
           qemu: true
-          docker_image: arm64v8/alpine:3.12
+          docker_image: arm64v8/alpine:3.20
 
         - os: ubuntu
           rid: linux-x64
-          docker_image: centos:7
-          # latest as of 2022-01-16
-          devtoolset: 11
+          docker_image: oraclelinux:8
 
         - os: ubuntu
           rid: linux-arm64
           qemu: true
-          docker_image: arm64v8/centos:7
-          # latest that contains gcc-c++ as of 2022-01-16
-          devtoolset: 10
+          docker_image: arm64v8/oraclelinux:8
 
     defaults:
       run:
@@ -344,21 +340,9 @@ jobs:
             ;;
 
           linux*)
-            echo ::group::Add repositories
-            yum -y --setopt=skip_missing_names_on_install=False \
-              install centos-release-scl-rh epel-release
-            echo ::endgroup::
-
             echo ::group::Install packages
-            yum -y --setopt=skip_missing_names_on_install=False \
-              install cmake3 devtoolset-${{ matrix.devtoolset }}-{gcc-c++,make} zlib-devel
-            echo ::endgroup::
-
-            echo ::group::Create environment setup script
-            # scl_source uses nonzero $? internally
-            echo >> setup_devtools.sh \
-              'set +e; . scl_source enable devtoolset-${{ matrix.devtoolset }} || exit; set -e'
-            echo >> setup_devtools.sh 'alias cmake=cmake3'
+            dnf -y --setopt=skip_missing_names_on_install=False \
+              install make cmake gcc-c++ zlib-devel
             echo ::endgroup::
             ;;
         esac
@@ -367,8 +351,6 @@ jobs:
       # We can't use the CI's `env` key here because this may run in a
       # Docker container that doesn't see the CI's native environment
       run: |
-        . ./setup_devtools.sh
-
         NPROC=$(nproc)
         RID=${{ matrix.rid }}
         SOEXT=so
